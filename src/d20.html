@@ -1,0 +1,76 @@
+<html>
+    <body>
+        <div style="margin-bottom: 2px;">
+            <textarea id="alg" rows="4" cols="127" placeholder="Enter enhancement alg"></textarea>
+        </div>
+        <div style="margin-bottom: 2px;">
+            <textarea id="map" rows="5" cols="100" placeholder="Enter map"></textarea>
+        </div>        
+        <div style="margin-bottom: 2px;">
+            <button type="button" id="runEnh">Enhance image</button>
+        </div>        
+        <div id="grid"></div>
+
+        <script>
+            const runEnh = () => {
+                const alg = document.getElementById("alg").value.split("");
+                let defaultBit = "."; //infinite space bit
+                let rowDivs = [];
+                let img = document.getElementById("map").value.split("\n").filter(l => l).map(l => l.split(""))
+                const recalcImg = () => {
+                    let newImg = [];
+                    for (let i = -1; i < img.length + 1; i++) {
+                        let row = [];                        
+                        for (let j = -1; j < img.length + 1; j++) {
+                            const gb = (i, j) => ((((img[i] || [])[j] || defaultBit) == "#") ? 1 : 0);
+                            let bits = [ 
+                                gb(i-1, j-1), gb(i-1, j), gb(i-1, j+1),
+                                gb(i, j-1), gb(i, j), gb(i, j+1),
+                                gb(i+1, j-1), gb(i+1, j), gb(i+1, j+1),
+                            ]
+                            let idx = bits.map((v, p) => v ? (1 << (bits.length - 1 - p)) : 0).reduce((acc, v) => acc + v, 0);
+                            row.push(alg[idx])
+                        }
+                        newImg.push(row)
+                    }
+                    defaultBit = defaultBit == "." ? alg[0] : alg[511];
+                    img = newImg;                    
+                }              
+
+                const drawFrame = () => {
+                    let width = 600;
+                    let height = 600;
+                    rowDivs.forEach(dv => dv.remove()); 
+                    rowDivs = [];               
+                    const grid = document.getElementById("grid");
+                    img.forEach(row => {
+                        const rowDiv = document.createElement("div");
+                        grid.append(rowDiv);
+                        rowDiv.classList.add("row");
+                        rowDivs.push(rowDiv);
+                        row.forEach(cell => {
+                            const cellDiv = document.createElement("div");
+                            cellDiv.style.width = (width / row.length) + "px";
+                            cellDiv.style.height = (height / img.length) + "px";
+                            cellDiv.style.display = "inline-block";
+                            const color = (cell == "#") ? 220 : 50;
+                            cellDiv.style.backgroundColor = "rgb(" + color + "," + color + "," + color + ")";
+                            rowDiv.append(cellDiv);
+                        })
+                    })
+                }
+                const delay = 250;
+                const runGame = (n) => {
+                    if (n == 0) return;
+                    drawFrame();
+                    recalcImg();
+                    console.log("Step", n, " num pixels: ", img.reduce((acc, r) => r.reduce((acc, v) => acc + ((v == "#") ? 1 : 0), acc), 0));
+                    console.log(img.map(r => r.join("")).join("\n"));                    
+                    setTimeout(() => runGame(n-1), delay);                    
+                }                
+                runGame(50);
+            }
+            document.getElementById("runEnh").addEventListener("click", runEnh);
+        </script>
+    </body>
+</html>

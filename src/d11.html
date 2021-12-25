@@ -1,0 +1,117 @@
+<html>
+    <body>
+        <div style="margin-bottom: 2px;">
+            <textarea id="octos" rows="10" placeholder="Enter octopuses"></textarea>
+        </div>
+        <div style="margin-bottom: 2px;">
+            <button type="button" id="runOctos">Run them</button>
+        </div>        
+        <div id="grid">
+
+        </div>
+
+        <script>
+//             const input = `5483143223
+// 2745854711
+// 5264556173
+// 6141336146
+// 6357385478
+// 4167524645
+// 2176841721
+// 6882881134
+// 4846848554
+// 5283751526`;
+            const input = `4472562264
+8631517827
+7232144146
+2447163824
+1235272671
+5133527146
+6511372417
+3841841614
+8621368782
+3246336677`;
+            const runOctos = () => {
+                const input = document.getElementById("octos").value;
+                let cells = [];
+                try {
+                    cells = input.split("\n").map((s, i) => s.split("").map((x, j) => ({ i, j, x: parseInt(x)})));
+                } catch (e) {
+                    console.error(e);
+                    return;
+                }
+                if (cells.length == 0) return;
+                cells.forEach((row, i) => row.forEach((cell, j) => {
+                    const n1 = (cells[i] || [])[j - 1] || null;
+                    const n2 = (cells[i + 1] || [])[j - 1] || null;
+                    const n3 = (cells[i + 1] || [])[j] || null;
+                    const n4 = (cells[i + 1] || [])[j + 1] || null;
+                    const n5 = (cells[i - 1] || [])[j - 1] || null;
+                    const n6 = (cells[i - 1] || [])[j] || null;
+                    const n7 = (cells[i - 1] || [])[j + 1] || null; 
+                    const n8 = cells[i][j + 1] || null;
+                    cell.nbs = [ n1, n2, n3, n4, n5, n6, n7, n8 ].filter(c => c != null);
+                    cell.flashed = false;
+                }))
+                const signalToColor = s => 20 + (220 * s / 10);
+                let rowDivs = [];
+                const drawFrame = () => {
+                    let width = 600;
+                    let height = 600;
+                    rowDivs.forEach(dv => dv.remove()); 
+                    rowDivs = [];               
+                    const grid = document.getElementById("grid");
+                    cells.forEach(row => {
+                        const rowDiv = document.createElement("div");
+                        grid.append(rowDiv);
+                        rowDiv.classList.add("row");
+                        rowDivs.push(rowDiv);
+                        row.forEach(cell => {
+                            const cellDiv = document.createElement("div");
+                            cellDiv.style.width = (width / row.length) + "px";
+                            cellDiv.style.height = (height / cells.length) + "px";
+                            cellDiv.style.display = "inline-block";
+                            const color = signalToColor(cell.x);
+                            cellDiv.style.backgroundColor = "rgb(" + color + "," + color + "," + color + ")";
+                            rowDiv.append(cellDiv);
+                        })
+                    })
+                }
+
+                let flashes = 0;
+                const gainEnergy = (cell) => { 
+                    if (cell.flashed) return;
+                    cell.x = (cell.x + 1) % 10;
+                    if (cell.x === 0) {
+                        flashes++;
+                        cell.flashed = true;
+                        cell.nbs.forEach(gainEnergy);                    
+                    }
+                }
+                let allFlashed = false;
+                const gameStep = () => {
+                    allFlashed = true;
+                    cells.forEach(row => row.forEach(gainEnergy));
+                    cells.forEach(row => row.forEach(c => {
+                        allFlashed = allFlashed && c.flashed;
+                        c.flashed = false;
+                    }));
+                    console.log(cells.map(row => row.map(c => c.x.toString()).join("")).join("\n"));
+                }
+                let maxSteps = 100;
+                let delay = 50;
+                const runGame = (step) => {                     
+                    gameStep();    
+                    drawFrame();
+                    console.log("after step ", step, "/", maxSteps, ": ", flashes, " flashes");
+                    // if (step == maxSteps) return; 
+                    if (allFlashed) return;
+                    setTimeout(() => runGame(step+1), delay);
+                }
+                drawFrame();
+                setTimeout(() => runGame(1), delay);
+            }
+            document.getElementById("runOctos").addEventListener("click", runOctos);
+        </script>
+    </body>
+</html>

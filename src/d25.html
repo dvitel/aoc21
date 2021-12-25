@@ -1,0 +1,94 @@
+<html>
+    <body>
+        <div style="margin-bottom: 2px;">
+            <textarea id="map" rows="5" cols="100" placeholder="Enter map"></textarea>
+        </div>        
+        <div style="margin-bottom: 2px;">
+            <button type="button" id="runCuc">Run cucumbers</button>
+        </div>        
+        <div id="grid"></div>
+
+        <script>
+            const runCuc = () => {
+                let rowDivs = [];
+                // let cucs = {">":[], "v":[]};
+                let pos = [];
+                let updates = []
+                let map = document.getElementById("map").value.split("\n").filter(l => l).map(l => l.split(""));
+                const detectEPos = ({i, j}) => {
+                    let w = ((j == 0) ? map[i].length : j) - 1;
+                    if (map[i][w] == ">") { 
+                        updates.push(() => {
+                            map[i][j] = ">"; 
+                            map[i][w] = "."; 
+                        });
+                        return {i, j:w}
+                    }
+                    else return {i, j}
+                }
+                const detectSPos = ({i, j}) => {
+                    let n = ((i == 0) ? map.length : i) - 1;
+                    if (map[n][j] == "v") { 
+                        updates.push(() => {
+                            map[i][j] = "v"; 
+                            map[n][j] = "."; 
+                        });
+                        return {i: n, j} 
+                    } else return {i, j}
+                }                
+                map.forEach((r, i) => r.forEach((p, j) => {
+                    if (p == ".") pos.push({i, j});                        
+                }))
+                const recalcImg = () => {
+                    updates = [];
+                    pos = pos.map(detectEPos).map(detectSPos);         
+                    updates.forEach(u => u());
+                }              
+
+                const drawFrame = () => {
+                    let width = 600;
+                    let height = 600;
+                    rowDivs.forEach(dv => dv.remove()); 
+                    rowDivs = [];               
+                    const grid = document.getElementById("grid");
+                    map.forEach(row => {
+                        const rowDiv = document.createElement("div");
+                        grid.append(rowDiv);
+                        rowDiv.classList.add("row");
+                        rowDivs.push(rowDiv);
+                        row.forEach(cell => {
+                            const cellDiv = document.createElement("div");
+                            cellDiv.style.width = (width / row.length) + "px";
+                            cellDiv.style.height = (height / map.length) + "px";
+                            cellDiv.style.display = "inline-block";
+                            const color = (cell == ".") ? 255 : ((cell == ">" ? 127 : 50));
+                            cellDiv.style.backgroundColor = "rgb(" + color + "," + color + "," + color + ")";
+                            rowDiv.append(cellDiv);
+                        })
+                    })
+                }
+                const delay = 20;
+                const maxN = 1000000;
+                const runGame = (n) => {
+                    if (n == 0) return;
+                    if ((n % 10) == 0) {
+                        console.log("Step", (maxN - n + 1), " num updates ", updates.length);
+                        drawFrame();
+                    }
+                    recalcImg();                    
+                    // console.log(map.map(r => r.join("")).join("\n"));
+                    if (updates == 0) {
+                        console.log("Step", (maxN - n + 1), " num updates ", updates.length);
+                        drawFrame();
+                        return;
+                    }
+                    setTimeout(() => runGame(n-1), delay);                    
+                    // runGame(n-1)
+                }            
+                // console.log(map.map(r => r.join("")).join("\n"));    
+                runGame(maxN);
+            }
+            document.getElementById("runCuc").addEventListener("click", runCuc);
+        </script>
+    </body>
+</html>
